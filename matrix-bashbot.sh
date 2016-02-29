@@ -338,6 +338,17 @@ SetTopic() { ## change the topic in the matrix room
 #          --data '{"topic":"test topic"}'
 }
 
+SetFilter() {
+    cat <<-EOF
+	look at this http://matrix.org/docs/spec/r0.0.1/client_server.html#filtering
+	the main way that filters are used today is to apply limits
+	e.g. my vector right here is using {"room":{"timeline":{"limit":20}}}
+	based on
+	curl 'https://matrix.org/_matrix/client/r0/user/@matthew:matrix.org/filter/21?access_token=secret'
+	filter number 21 having been pulled out of looking at what it's using in a /sync request
+	EOF
+}
+
 GetInitialSync() { ## retrieves initialSync date with limit=1 and stores it in /tmp/matrixbashbot-$USER/state-initial-sync
     ## for now nothing else is done with the data, it is just stored in the file
 #    curl -XGET "http://localhost:8008/_matrix/client/api/v1/initialSync?limit=1&access_token=YOUR_ACCESS_TOKEN"
