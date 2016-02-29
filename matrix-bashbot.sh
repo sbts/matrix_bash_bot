@@ -221,6 +221,24 @@ VERSION() { ## Display the current version of this script
 }
 if [[ $@ =~ -V ]] || [[ $@ =~ --version ]]; then VERSION; fi
 
+rawurlencode() { # URL encode $1
+    # Result is returned in $URLstring
+  local string="${1}"
+  local strlen=${#string}
+  local encoded=""
+
+  for (( pos=0 ; pos<strlen ; pos++ )); do
+     c=${string:$pos:1}
+     case "$c" in
+        [-_.~a-zA-Z0-9] ) o="${c}" ;;
+        * )               printf -v o '%%%02x' "'$c"
+     esac
+     encoded+="${o}"
+  done
+  #echo "${encoded}"    # You can either set a return variable (FASTER) 
+  URLstring="${encoded}"   #+or echo the result (EASIER)... or both... :p
+}
+
 Register() { ## Register a new username.
     ## Username is read from "$StateFile" [default: /tmp/matrixbashbot-$USER/state-vars ]
     ## Password is currently stored in this script, 
@@ -339,6 +357,7 @@ SetTopic() { ## change the topic in the matrix room
 }
 
 SetFilter() {
+    
     cat <<-EOF
 	look at this http://matrix.org/docs/spec/r0.0.1/client_server.html#filtering
 	the main way that filters are used today is to apply limits
@@ -389,8 +408,96 @@ DoSync() { ## runs a sync from the last known event time
     ## ########################################################
     ##
     _since=$state_next_batch
-    _filter='{room{include_leave: "false", account_data:"", timeline:"", ephemeral:"", state:"", not_rooms:"", rooms:"'"$state_roomID"'" }}'
-    echo curl --silent -XGET "$state_baseURL/api/v1/sync?filter=${_filter}&timeout=30000&since=${_since}&access_token=$state_accessTOKEN"
+#    _filter='{room{include_leave: "false", account_data:"", timeline:"", ephemeral:"", state:"", not_rooms:"", rooms:"'"$state_roomID"'" }}'
+#    rawurlencode '{"room":{"timeline":{"limit":1}}}'
+#    rawurlencode '{
+#        "event_fields":"content.body",
+#        "room":{
+#            "include_leave": "false",
+#            "timeline":{"limit":1},
+#            "rooms":"'"$state_roomID"'"
+#        }
+#    }'
+#    rawurlencode '{"event_fields":"content.body", "room":{"include_leave": "false", "timeline":{"limit":1}, "rooms":"'"$state_roomID"'"}}'
+#    rawurlencode '{"presence":{"types":[]}, "event_fields":["content.body"], "room":{"state":{"types":[]}, "timeline":{"limit":1}, "rooms":["'"$state_roomID"'"]}}'
+    #rawurlencode '{
+    #    "account_data":{"types":[]},
+    #    "presence":{"types":[]},
+    #    "event_fields":["timeline"],
+    #    "room":{
+    #        "timeline":{"limit":1},
+    #        "rooms":["!pstlCRlhnmqaJggfOM:matrix.org"]
+    #    }
+    #}'
+
+#    rawurlencode '{
+#        "room": {
+#            "state": {
+#                "types": ["m.room.*"],
+#                "not_rooms": ["!726s6s6q:example.com"]
+#            },
+#            "timeline": {
+#                "limit": 2,
+#                "types": ["m.room.message"],
+#                "not_rooms": ["!726s6s6q:example.com"],
+#                "not_senders": ["@spam:example.com"]
+#                "rooms":["!pstlCRlhnmqaJggfOM:matrix.org"]
+#            },
+#            "ephemeral": {
+#                "types": [ "m.receipt", "m.typing"],
+#                "not_rooms": ["!726s6s6q:example.com"],
+#                "not_senders": ["@spam:example.com"]
+#            }
+#        },
+#        "presence": {
+#            "types": ["m.presence"],
+#            "not_senders": ["@alice:example.com"]
+#        },
+#        "event_format": "client",
+#        "event_fields": ["type", "content", "sender"]
+#    }'
+
+    rawurlencode '{
+        "room": {
+            "state": {
+                "types": [],
+                "rooms": []
+            },
+            "timeline": {
+                "limit": 2,
+                "types": ["m.room.message"],
+                "not_senders": ["@spam:example.com"]
+                "rooms":["!pstlCRlhnmqaJggfOM:matrix.org"]
+            },
+            "ephemeral": {
+                "types": [],
+            }
+        },
+        "presence": {
+            "types": [],
+        },
+        "event_format": "client",
+        "event_fields": ["type", "content", "sender"]
+    }'
+    _filter="$URLstring"
+    #echo curl --silent -XGET "$state_baseURL/api/v1/sync?filter='${_filter}'&timeout=30000&since=${_since}&access_token=state_accessTOKEN"
+#    curl -XGET "$state_baseURL/api/v1/sync?filter=$_filter&timeout=30000&since=${_since}&access_token=$state_accessTOKEN"
+#    curl -v -XGET "$state_baseURL/r0/sync?filter=$_filter&timeout=30000&since=${_since}&access_token=$state_accessTOKEN"
+    curl  -XGET "$state_baseURL/r0/sync?filter=$_filter&timeout=30000&access_token=$state_accessTOKEN" > "$File_InitialSync"
+    echo "==========================="
+    echo "==========================="
+    echo "====  results are in   ===="
+    echo "==========================="
+    echo "$File_InitialSync"
+    echo "==========================="
+    echo "==========================="
+    echo "====    try running    ===="
+    echo -e " jq .rooms \"$File_InitialSync\""
+    echo "==========================="
+
+#    jq -C .rooms "$File_InitialSync"
+
+
 #    curl "https://matrix.org/_matrix/client/r0/sync?filter=7&timeout=30000&since=s14094047_178730_33991_755371_4320&access_token=$state_accessTOKEN" \
 #    -H 'Host: matrix.org' \
 #    -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0' \
@@ -405,4 +512,49 @@ DoSync() { ## runs a sync from the last known event time
 dump_State
 "$@"
 store_State
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
