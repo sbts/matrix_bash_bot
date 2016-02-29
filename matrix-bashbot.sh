@@ -124,6 +124,7 @@ if [[ ! -x `which jq` ]]; then
     else
         echo "Please install Required tool 'jq' then return here and"
         read -p 'Press Enter to continue'
+    fi
     # check again now that we have theoretically installed jq
     if [[ ! -x `which jq` ]]; then DIE "jq is not available" "Please install 'jq' and Re-Run this script"; exit; fi
 fi
