@@ -457,8 +457,11 @@ DoSync() { ## runs a sync from the last known event time
 #        "event_fields": ["type", "content", "sender"]
 #    }'
 
+#            "rooms":"'"$state_roomID"'"
     rawurlencode '{
         "room": {
+            "include_leave": "false",
+            "account_data": {},
             "state": {
                 "types": [],
                 "rooms": []
@@ -466,23 +469,22 @@ DoSync() { ## runs a sync from the last known event time
             "timeline": {
                 "limit": 2,
                 "types": ["m.room.message"],
-                "not_senders": ["@spam:example.com"]
                 "rooms":["!pstlCRlhnmqaJggfOM:matrix.org"]
             },
             "ephemeral": {
-                "types": [],
+                "types": []
             }
         },
-        "presence": {
-            "types": [],
-        },
         "event_format": "client",
-        "event_fields": ["type", "content", "sender"]
+        "event_fields": ["type", "content.msgtype", "content.body", "sender"],
+        "account_data":{
+                "types": [],
+        },
+        "presence":{
+                "types": [],
+        }
     }'
     _filter="$URLstring"
-    #echo curl --silent -XGET "$state_baseURL/api/v1/sync?filter='${_filter}'&timeout=30000&since=${_since}&access_token=state_accessTOKEN"
-#    curl -XGET "$state_baseURL/api/v1/sync?filter=$_filter&timeout=30000&since=${_since}&access_token=$state_accessTOKEN"
-#    curl -v -XGET "$state_baseURL/r0/sync?filter=$_filter&timeout=30000&since=${_since}&access_token=$state_accessTOKEN"
     curl  -XGET "$state_baseURL/r0/sync?filter=$_filter&timeout=30000&access_token=$state_accessTOKEN" > "$File_InitialSync"
     echo "==========================="
     echo "==========================="
