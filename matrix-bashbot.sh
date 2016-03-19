@@ -197,25 +197,27 @@ dump_Functions() {
         if [[ -n $F ]]; then echo; fi
 
         # print Line wrapped to 80 chars
-        while (( ${#D} >1 )); do
+        while (( ${#D} >80 )); do
             D1="${D:0:80}";     # clip Line to 80 chars
-            DlastWord="${D1##* }"; # save the last word on this line
+            DlastWord="${D1##*[ #]}"; # save the last word on this line
             if (( ${#DlastWord} >= 80 )); then # if we have a lastword that is all of the line then don't wrap it
                 DlastWord=' ';
             else
                 DlastWord="${DlastWord:0:79}";
             fi
-            D1="${D1% *}";  # strip the last word off of line 1 (use space as a delimiter)
+            D1="${D1%[ #]*}";  # strip the last word off of line 1 (use space as a delimiter)
             D="${DlastWord:0:79}${D:80}"; # prune the first 80 chars from the buffer and prepend the last word from previous line
             printf "    %-*s : %s\n" $_len "$F" "${D1% }";
-            F='++'
-            if (( ${#D} <80 )); then break; fi # nothing more to print for this line
+            F=''; # only print the function name for the first line
+            #if (( ${#D} <80 )); then break; fi # nothing more to print for this line
 
 #            echo "D :${#D}:$D"
 #            echo "D1:${#D1}:$D1"
 #            echo "LW:${#DlastWord}:$DlastWord"
 #            exit
         done
+        printf "    %-*s : %s\n" $_len "$F" "${D}";
+
     done < <(egrep '[a-zA-Z0-9_]+[(][)] { ?##|^[[:space:]]*##' $0)
 }
 
