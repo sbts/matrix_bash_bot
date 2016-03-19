@@ -7,8 +7,8 @@
 # If you want a doc, there's http://matrix.org/docs/howtos/client-server.html
 # Another option is to go into the browser console and type localStorage.getItem("mx_access_token")
 
-## ##################################################################################################
-## ##################################################################################################
+## ########################################################################################
+## ########################################################################################
 ##
 ## USAGE: matrix-bashbot.sh Option|Command [ARG1 [ARG2]]
 ##
@@ -16,8 +16,8 @@
 ##     -v --version : script Version
 ##     -h --help    : this help
 ##
-## ##################################################################################################
-## ##################################################################################################
+## ########################################################################################
+## ########################################################################################
 
 
 # #####################
@@ -49,8 +49,8 @@ state_home_server="matrix.org"
 state_accessTOKEN='xxxxxx'
 state_refreshTOKEN='xxxxxx'
 
-## ##################################################################################################
-## ##################################################################################################
+## ########################################################################################
+## ########################################################################################
 ##
 ## Configuration and Stored State are first obtained from the defaults in the script
 ## Then read from ~/.matrix-bash-bot.rc
@@ -64,8 +64,8 @@ state_refreshTOKEN='xxxxxx'
 ##   A better way of handling this is to make sure you do a login after every reboot.
 ##   Eventually we will test for an empty TOKEN every time the script is run, and do an auto login.
 ##
-## ##################################################################################################
-## ##################################################################################################
+## ########################################################################################
+## ########################################################################################
 
 
 # #####################
@@ -183,7 +183,8 @@ dump_Functions() {
         if (( ${#F} > _len )); then _len=${#F}; fi
     done < <(egrep '[a-zA-Z0-9_]+[(][)] {|^[[:space:]]*##' $0)
 
-    echo -e '\nFunction List'
+    echo -e '\n    Function List'
+    echo -e '\n    ---------------------------------------------------------------------------------------------------------'
     #egrep -A5 '() [{]' $0 | egrep '() [{]|^[[:space:]]*##'
     while read -t10 F D; do
         F="${F#\#\#}";
@@ -194,7 +195,27 @@ dump_Functions() {
         D="${D#\#}"
         D="${D# }"
         if [[ -n $F ]]; then echo; fi
-        printf "    %-*s : %s\n" $_len "$F" "$D";
+
+        # print Line wrapped to 80 chars
+        while (( ${#D} >1 )); do
+            D1="${D:0:80}";     # clip Line to 80 chars
+            DlastWord="${D1##* }"; # save the last word on this line
+            if (( ${#DlastWord} >= 80 )); then # if we have a lastword that is all of the line then don't wrap it
+                DlastWord=' ';
+            else
+                DlastWord="${DlastWord:0:79}";
+            fi
+            D1="${D1% *}";  # strip the last word off of line 1 (use space as a delimiter)
+            D="${DlastWord:0:79}${D:80}"; # prune the first 80 chars from the buffer and prepend the last word from previous line
+            printf "    %-*s : %s\n" $_len "$F" "${D1% }";
+            F='++'
+            if (( ${#D} <80 )); then break; fi # nothing more to print for this line
+
+#            echo "D :${#D}:$D"
+#            echo "D1:${#D1}:$D1"
+#            echo "LW:${#DlastWord}:$DlastWord"
+#            exit
+        done
     done < <(egrep '[a-zA-Z0-9_]+[(][)] { ?##|^[[:space:]]*##' $0)
 }
 
