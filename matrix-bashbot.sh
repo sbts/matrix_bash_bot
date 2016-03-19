@@ -69,7 +69,7 @@ state_refreshTOKEN='xxxxxx'
 
 
 # #####################
-# Read User Config
+# Check for Args and warn if non available
 # #####################
 if [[ -z $1 ]]; then
     cat <<-EOF
@@ -209,14 +209,15 @@ dump_Functions() {
             D="${DlastWord:0:79}${D:80}"; # prune the first 80 chars from the buffer and prepend the last word from previous line
             printf "    %-*s : %s\n" $_len "$F" "${D1% }";
             F=''; # only print the function name for the first line
-            #if (( ${#D} <80 )); then break; fi # nothing more to print for this line
-
-#            echo "D :${#D}:$D"
-#            echo "D1:${#D1}:$D1"
-#            echo "LW:${#DlastWord}:$DlastWord"
-#            exit
+            if [[ "$D1" =~ "#${D:0:79}" ]]; then # if the remaining buffer starts with a # and is a perfect subset of the last line printed just drop it
+                D='';       # drop the line as it's almost certainly just a series of #'s and either way it already exists on the line above
+            else
+                D="    $D"; # provide an indent of 4 for wrapped lines
+            fi
         done
-        printf "    %-*s : %s\n" $_len "$F" "${D}";
+        if [[ -n $D ]]; then
+            printf "    %-*s : %s\n" $_len "$F" "${D}";
+        fi
 
     done < <(egrep '[a-zA-Z0-9_]+[(][)] { ?##|^[[:space:]]*##' $0)
 }
