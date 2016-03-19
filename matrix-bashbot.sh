@@ -67,11 +67,49 @@ state_refreshTOKEN='xxxxxx'
 ## ########################################################################################
 ## ########################################################################################
 
+DIE() { ## $1 = short message  $2 = detail
+    ## print a loud error message and exit
+    cat <<-EOF
+	==================================
+	==================================
+	====  ERROR ERROR ERROR ERROR ====
+	==================================
+	==================================
+	====                          ====`echo $'\r'`====  $1
+	==================================
+	$2
+	==================================
+	==================================
+	
+	EOF
+    exit
+}
+
+
+# #####################
+# Work out if we were executed or sourced
+# and if sourced make sure it was from a bash shell
+# #####################
+#echo \$ARGV=$BASH_ARGV
+#echo \$BASH=$BASH
+#echo \$0=$0
+#echo \${BASH_SOURCE[0]}=${BASH_SOURCE[0]}
+#_bash_source0="${BASH_SOURCE[0]}"
+ScriptName="${ARGV:-$0}"
+if [[ ${BASH##*/} != "bash" ]]; then
+    echo "This script '$ScriptName' is intended to only be run from bash"
+    exit 1
+fi
+if [[ "${_bash_source0##*/}" == "${0##*/}" ]]; then
+    SOURCED=false;
+else
+    SOURCED=true;
+fi
 
 # #####################
 # Check for Args and warn if non available
 # #####################
-if [[ -z $1 ]]; then
+if [[ -z $1 ]] && ! $SOURCED; then
     cat <<-EOF
 	    
 	    ===============================================================
@@ -97,8 +135,9 @@ File_InitialSync="$StateDir/state-initial-sync"
 mkdir -p "$StateDir"
 
 if [[ ! -r $StateFile ]]; then
-    chown -R $USER:$USER "$StateDir/" || { echo "failed to own my state file"; exit; }
+    chown -R $USER:$USER "$StateDir/" || { DIE "'$ScriptName' said" "failed to own my state file"; exit; }
 fi
+
 # #####################
 # Load stored state from file
 # #####################
@@ -113,24 +152,6 @@ fi
 MSG='Test from matrix bashbot';
 #curl 'https://matrix.org/_matrix/client/r0/rooms/!cURbafjkfsMDVwdRDQ%3Amatrix.org/send/m.room.message/m1455740925390?access_token=censored' \
 #    -X PUT --data-binary '{"msgtype":"m.text","body":"sure. just grab them out of the network inspector in Chrome or Firefox"}'
-
-DIE() { ## $1 = short message  $2 = detail
-    ## print a loud error message and exit
-    cat <<-EOF
-	==================================
-	==================================
-	====  ERROR ERROR ERROR ERROR ====
-	==================================
-	==================================
-	====                          ====`echo $'\r'`====  $1
-	==================================
-	$2
-	==================================
-	==================================
-	
-	EOF
-    exit
-}
 
 if [[ ! -x `which jq` ]]; then 
     if [[ -e `which apt-get` ]]; then
@@ -185,7 +206,6 @@ dump_Functions() {
 
     echo -e '\n    Function List'
     echo -e '\n    ---------------------------------------------------------------------------------------------------------'
-    #egrep -A5 '() [{]' $0 | egrep '() [{]|^[[:space:]]*##'
     while read -t10 F D; do
         F="${F#\#\#}";
         F="${F/()/}";
@@ -550,10 +570,15 @@ DoSync() { ## runs a sync from the last known event time
 #    -H 'Connection: keep-alive'
 }
 
-dump_State
-"$@"
-store_State
+if ! $SOURCED; then
+    dump_State;
+fi
 
+"$@"
+
+if ! $SOURCED; then
+    store_State
+fi
 
 
 
