@@ -16,7 +16,8 @@ This allows sending of multiple messages with a simple SendMessage command.
 There is an assumption made here, there will only be one Login Name and one ROOM in use by any System User.
 This is due to the state file being stored in a directory named with the System User appended.
 
-Function List
+    Function List
+    ------------------------------------------------------------------------------------------------------------------
                     : ################################################################################################
                     : ################################################################################################
                     : 
