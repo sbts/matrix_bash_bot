@@ -85,6 +85,8 @@ DIE() { ## $1 = short message  $2 = detail
     exit
 }
 
+read COLUMNS < <(tput cols)
+export COLUMNS
 
 # #####################
 # Work out if we were executed or sourced
@@ -204,8 +206,14 @@ dump_Functions() {
         if (( ${#F} > _len )); then _len=${#F}; fi
     done < <(egrep '[a-zA-Z0-9_]+[(][)] {|^[[:space:]]*##' $0)
 
+    if [[ $0 =~ --README ]] || [[ $@ =~ --README ]]; then
+        (( _wrap_len = 109 - _len - 7)); # this hopefully is optimal for viewing on GITHUB without scrollbars
+    else
+        (( _wrap_len = COLUMNS - _len - 7 )); # wrap dynamically based on screen width
+    fi
+
     echo -e '\n    Function List'
-    echo -e '\n    ---------------------------------------------------------------------------------------------------------'
+    printf  "\n%1.*s\n" $(( _wrap_len + _len + 6 )) '    ---------------------------------------------------------------------------------------------------------'
     while read -t10 F D; do
         F="${F#\#\#}";
         F="${F/()/}";
@@ -217,19 +225,19 @@ dump_Functions() {
         if [[ -n $F ]]; then echo; fi
 
         # print Line wrapped to 80 chars
-        while (( ${#D} >80 )); do
-            D1="${D:0:80}";     # clip Line to 80 chars
+        while (( ${#D} > _wrap_len )); do
+            D1="${D:0:$_wrap_len}";     # clip Line to 80 chars
             DlastWord="${D1##*[ #]}"; # save the last word on this line
-            if (( ${#DlastWord} >= 80 )); then # if we have a lastword that is all of the line then don't wrap it
+            if (( ${#DlastWord} >= _wrap_len )); then # if we have a lastword that is all of the line then don't wrap it
                 DlastWord=' ';
             else
-                DlastWord="${DlastWord:0:79}";
+                DlastWord="${DlastWord:0:$_wrap_len}";
             fi
             D1="${D1%[ #]*}";  # strip the last word off of line 1 (use space as a delimiter)
-            D="${DlastWord:0:79}${D:80}"; # prune the first 80 chars from the buffer and prepend the last word from previous line
+            D="${DlastWord:0:80}${D:$_wrap_len}"; # prune the first 80 chars from the buffer and prepend the last word from previous line
             printf "    %-*s : %s\n" $_len "$F" "${D1% }";
             F=''; # only print the function name for the first line
-            if [[ "$D1" =~ "#${D:0:79}" ]]; then # if the remaining buffer starts with a # and is a perfect subset of the last line printed just drop it
+            if [[ "$D1" =~ "#${D:0:$_wrap_len}" ]]; then # if the remaining buffer starts with a # and is a perfect subset of the last line printed just drop it
                 D='';       # drop the line as it's almost certainly just a series of #'s and either way it already exists on the line above
             else
                 D="    $D"; # provide an indent of 4 for wrapped lines
@@ -248,6 +256,7 @@ HELP() { ## This Help Message
     clear;
     dump_State;
     dump_Functions;
+#    dump_Functions --README;
 #    ( declare -p )
 #    set -o posix
 #    echo 'Current Config is'
@@ -259,7 +268,8 @@ HELP() { ## This Help Message
 	EOF
     exit
 }
-if [[ $@ =~ -h ]] || [[ $@ =~ --help ]]; then HELP; fi
+
+if ! $SOURCED || { [[ $@ =~ -h ]] || [[ $@ =~ --help ]]; } ; then HELP; fi
 
 VERSION() { ## Display the current version of this script
     ## Run this with -V --version or VERSION
