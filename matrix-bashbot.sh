@@ -71,6 +71,21 @@ state_refreshTOKEN='xxxxxx'
 # #####################
 # Read User Config
 # #####################
+if [[ -z $1 ]]; then
+    cat <<-EOF
+	    
+	    ===============================================================
+	    ==  You probably want to run this with at least one argument ==
+	    ===============================================================
+	    ==  -h or --help will show you available arguments           ==
+	    ===============================================================
+	    
+	EOF
+fi
+
+# #####################
+# Read User Config
+# #####################
 if [[ -r ~/.matrix-bash-bot.rc ]]; then
     source ~/.matrix-bash-bot.rc;   # read local config from file
     chmod 600 ~/.matrix-bash-bot.rc # force it to only be readable/writeable by owner
