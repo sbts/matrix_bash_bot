@@ -198,7 +198,9 @@ clear_State() { ## clear all stored state
     if rm "$StateFile" 2>/dev/null; then echo "DONE"; else echo "FAILED"; fi
 }
 
-dump_Functions() {
+dump_Functions() { ## Dump a help style list of functions and Comments starting with ##
+    ## to get a function name to be dumped you need to follow the form, foo() { ## comment
+    ## All lines that start with "[[:space:]]*## "  will be included regardless of being inside a function or not
     while read -t10 F D; do # find max length of any function name
         F="${F#\#\#}"; F="${F/()/}";
         if (( ${#F} > _len )); then _len=${#F}; fi
@@ -576,6 +578,10 @@ DoSync() { ## runs a sync from the last known event time
 #    -H 'Referer: https://vector.im/develop/' \
 #    -H 'Origin: https://vector.im' \
 #    -H 'Connection: keep-alive'
+}
+
+GetPushRules() { ## dump the current PushRules to stdout as formatted JSON
+    curl "$state_baseURL/r0/pushrules/?access_token=$state_accessTOKEN" | jq .
 }
 
 if ! $SOURCED; then
