@@ -584,6 +584,44 @@ GetPushRules() { ## dump the current PushRules to stdout as formatted JSON
     curl "$state_baseURL/r0/pushrules/?access_token=$state_accessTOKEN" | jq .
 }
 
+GetRoomState() { ## dump the current Roomstate to stdout as formatted JSON
+    echo curl --silent -XGET "$state_baseURL/r0/rooms/{roomId}/state?access_token=$state_accessTOKEN"
+    resp=`curl --silent -XGET "$state_baseURL/api/v1/initialSync?limit=1&access_token=$state_accessTOKEN"`
+    echo "==== raw ===="
+    echo -e "$resp"
+    echo "==== json ===="
+    jq . /dev/stdin <<<$resp
+
+    GET /_matrix/client/r0/rooms/{roomId}/state
+GET /_matrix/client/r0/rooms/{roomId}/state
+}
+
+
+SampleGets() { ## some sample gets that don't need authentication
+    local _userId="${1:-@matthew:matrix.org}";
+    rawurlencode "$_userId"
+    _userId_encoded="$URLstring"
+
+    local _URL="http://${_userId##*:}"
+    rawurlencode "$_URL"
+    _URL="$URLstring"
+
+    echo "Public Room List for $_URL"
+    echo "More info is available for each room but limited to just the room name here"
+    echo "  Also we are limiting to the first 10 rooms incase it's run against a big server like matrix.org"
+    wget -q -O /dev/stdout $_URL/_matrix/client/r0/publicRooms | jq '.[] | .[].name' 2>/dev/null | head -n 10;
+    echo
+
+    echo "User Profile for user $_userId at $_URL"
+    wget -q -O /dev/stdout $_URL/_matrix/client/r0/profile/${_userId_encoded}/profile | jq '.';
+    echo
+
+    echo "Avatar URL for user $_userId at $_URL"
+    wget -q -O /dev/stdout $_URL/_matrix/client/r0/profile/${_userId_encoded}/avatar_url | jq '.';
+    echo
+}
+
+
 if ! $SOURCED; then
     dump_State;
 fi
