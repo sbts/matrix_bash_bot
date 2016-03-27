@@ -299,13 +299,18 @@ rawurlencode() { # URL encode $1
   for (( pos=0 ; pos<strlen ; pos++ )); do
      c=${string:$pos:1}
      case "$c" in
-        [-_.~a-zA-Z0-9] ) o="${c}" ;;
+        [-_.~a-zA-Z0-9%] ) o="${c}" ;;
         * )               printf -v o '%%%02x' "'$c"
      esac
      encoded+="${o}"
   done
   #echo "${encoded}"    # You can either set a return variable (FASTER) 
   URLstring="${encoded}"   #+or echo the result (EASIER)... or both... :p
+}
+test_rawurlencode() { ## test the rawurlencode() function, prints the result as well as putting it in $URLstring
+    ## $1 is the String to Encode
+    rawurlencode $@
+    echo $URLstring
 }
 
 Register() { ## Register a new username.
