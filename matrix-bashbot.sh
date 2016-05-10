@@ -390,46 +390,48 @@ SendMessage() { ## $1 is message to send
     curl "$state_baseURL/r0/rooms/$state_roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary '{"msgtype":"m.text","body":"'"$_MSG"'"}'
 }
 
+mpddj() { ## $@ command to send
+    ## skip the currently playing song on http://half-shot.uk/stream via mpddj in room mpd:half-shot.uk
+    ## ping Ping the server and get the delay.
+    ## current Get the current song title.
+    ## next Skip current song.
+    ## help This help text.
+    ## search Get the first youtube result by keywords.
+    ## [url] Type a youtube/soundcloud/file url in to add to the playlist.
+    ## stream Get the url of the stream.
+    ## playlist Display the the shortened playlist.
+    roomName='mpd:half-shot.uk'
+    rawurlencode '!gjBxrYiBQltiDameyR:half-shot.uk'
+    local roomID="$URLstring"
+    _MSG="!mpddj ${@:-help}"
+    state_txnID="`date "+%s"`$(( RANDOM % 9999 ))"
+    echo "running $_MSG in $roomName"
+    echo "you can listen at http://half-shot.uk/stream"
+    curl "$state_baseURL/r0/rooms/$roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary '{"msgtype":"m.text","body":"'"$_MSG"'"}' > /tmp/matrix-bashbot-mpddj.err 2>&1 && echo "success" || {
+        echo "Sending command failed!"
+        cat /tmp/matrix-bashbot-mpddj.err
+    }
+}
 mpddj_QueueSong() { ## $1 is message to send
     ## queue a song on http://half-shot.uk/stream via mpddj in room mpd:half-shot.uk
     ## a default song will be selected if you don't enter one
     ## if a url is supplied containing http: or https: then it will attempt to play that URL
     ## otherwise it will ask mpddj to search for the song.
-    roomName='mpd:half-shot.uk'
-    rawurlencode '!gjBxrYiBQltiDameyR:half-shot.uk'
-    local roomID="$URLstring"
-    _MSG="!mpddj "
     if [[ $1 =~ 'https?:' ]]; then
-        _MSG+="${1:-search lily allen fuck you}";
+        _MSG+="${@:-search lily allen fuck you}";
     else
-        _MSG+="search ${1:-lily allen fuck you}";
+        _MSG+="search ${@:-lily allen fuck you}";
     fi
-    state_txnID="`date "+%s"`$(( RANDOM % 9999 ))"
-    echo "queueing song '$_MSG' via $roomName"
-    echo "you can listen to it at http://half-shot.uk/stream"
-    curl "$state_baseURL/r0/rooms/$roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary '{"msgtype":"m.text","body":"'"$_MSG"'"}' > /tmp/matrix-bashbot-mpddj.err 2>&1 && echo "success" || {
-        echo "Queueing of song failed!"
-        cat /tmp/matrix-bashbot-mpddj.err
-    }
+    mpddj "$_MSG";
 }
 
 mpddj_next() { ## no arguments
     ## skip the currently playing song on http://half-shot.uk/stream via mpddj in room mpd:half-shot.uk
-    roomName='mpd:half-shot.uk'
-    rawurlencode '!gjBxrYiBQltiDameyR:half-shot.uk'
-    local roomID="$URLstring"
-    _MSG="!mpddj next"
-    state_txnID="`date "+%s"`$(( RANDOM % 9999 ))"
-    echo "skipping current song via $roomName"
-    echo "you can listen at http://half-shot.uk/stream"
-    curl "$state_baseURL/r0/rooms/$roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary '{"msgtype":"m.text","body":"'"$_MSG"'"}' > /tmp/matrix-bashbot-mpddj.err 2>&1 && echo "success" || {
-        echo "Skipping of song failed!"
-        cat /tmp/matrix-bashbot-mpddj.err
-    }
+    mpddj next;
 }
 mpddj_skip() { ## no arguments
     ## skip the currently playing song on http://half-shot.uk/stream via mpddj in room mpd:half-shot.uk
-    mpddj_next;
+    mpddj next;
 }
 
 SetIrcTopic() { ## This is a crude hack that bypasses setting the matrix topic
