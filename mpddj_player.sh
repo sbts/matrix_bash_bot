@@ -21,7 +21,7 @@ EOF
 
 while true; do
     tput cup 10 6
-    tput el
+    tput ed
     read Search
     tput ed
     echo
@@ -32,6 +32,8 @@ while true; do
         'skip') ./matrix-bashbot.sh mpddj_next;;
              *) ./matrix-bashbot.sh mpddj_QueueSong "$Search";;
     esac
+    echo
+    for i in {10..1}; do echo -en "\r  $i   "; sleep 1; done
 done
 
 
