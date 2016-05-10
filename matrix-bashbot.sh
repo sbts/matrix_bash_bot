@@ -212,7 +212,7 @@ dump_Functions() { ## Dump a help style list of functions and Comments starting 
         (( _wrap_len = COLUMNS - _len - 7 )); # wrap dynamically based on screen width
     fi
 
-    echo -e '\n    Function List'
+    echo -en '\n    Function List'
     printf  "\n%1.*s\n" $(( _wrap_len + _len + 6 )) '    ---------------------------------------------------------------------------------------------------------'
     while read -t10 F D; do
         F="${F#\#\#}";
@@ -288,7 +288,6 @@ WRITE_README() { ## Update the README.md file
 	This allows sending of multiple messages with a simple SendMessage command.
 	There is an assumption made here, there will only be one Login Name and one ROOM in use by any System User.
 	This is due to the state file being stored in a directory named with the System User appended.
-	
 	
 	EOF
     dump_Functions >> README.md
