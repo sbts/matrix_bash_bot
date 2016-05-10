@@ -390,6 +390,27 @@ SendMessage() { ## $1 is message to send
     curl "$state_baseURL/r0/rooms/$state_roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary '{"msgtype":"m.text","body":"'"$_MSG"'"}'
 }
 
+mpddj_QueueSong() { ## $1 is message to send
+    ## send a text string to the currently selected room
+    ## a default test string with appended date will be used if no string supplied.
+    roomName='mpd:half-shot.uk'
+    rawurlencode '!gjBxrYiBQltiDameyR:half-shot.uk'
+    local roomID="$URLstring"
+    _MSG="!mpddj "
+    if [[ $1 =~ 'https?:' ]]; then
+        _MSG+="${1:-search lily allen fuck you}";
+    else
+        _MSG+="search ${1:-lily allen fuck you}";
+    fi
+    state_txnID="`date "+%s"`$(( RANDOM % 9999 ))"
+    echo "queueing song '$_MSG' via $roomName"
+    echo "you can listen to it at http://half-shot.uk/stream"
+    curl "$state_baseURL/r0/rooms/$roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary '{"msgtype":"m.text","body":"'"$_MSG"'"}' > /tmp/matrix-bashbot-mpddj.err 2>&1 && echo "success" || {
+        echo "Queueing of song failed!"
+        cat /tmp/matrix-bashbot-mpddj.err
+    }
+}
+
 SetIrcTopic() { ## This is a crude hack that bypasses setting the matrix topic
     ## and directly tries setting the topic on the IRC side of the bridge.
     ## of course this will only work if your matrix (IRC side) user has OPs
