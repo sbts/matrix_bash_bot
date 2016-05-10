@@ -213,7 +213,7 @@ dump_Functions() { ## Dump a help style list of functions and Comments starting 
     fi
 
     echo -en '\n    Function List'
-    printf  "\n%1.*s\n" $(( _wrap_len + _len + 6 )) '    ---------------------------------------------------------------------------------------------------------'
+    printf  "\n%1.*s\n" $(( _wrap_len + _len + 6 )) '    ----------------------------------------------------------------------------------------------------------'
     while read -t10 F D; do
         F="${F#\#\#}";
         F="${F/()/}";
