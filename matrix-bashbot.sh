@@ -269,6 +269,31 @@ HELP() { ## This Help Message
     exit
 }
 
+WRITE_README() { ## Update the README.md file
+    cat <<-EOF >README.md
+	# matrix_bash_bot
+	matrix.org Bash Bot
+	
+	A Semi-Stateless Matrix Bot written in Bash
+	It depends on bash, curl and jq
+	
+	It is currently far from complete, but is usable to Login, Join a Room, and Send a message to that room
+	In theory, you can also register a new user, although this function is untested
+	
+	Receiving messages is being worked on at the moment.
+	
+	Other functions will be added when I need them or someone else contributes them.
+	
+	Some state is stored in /tmp so that consecutive runs don't need to re-login and re-join rooms.
+	This allows sending of multiple messages with a simple SendMessage command.
+	There is an assumption made here, there will only be one Login Name and one ROOM in use by any System User.
+	This is due to the state file being stored in a directory named with the System User appended.
+	
+	
+	EOF
+    dump_Functions >> README.md
+}
+
 if ! $SOURCED || { [[ $@ =~ -h ]] || [[ $@ =~ --help ]]; } ; then HELP; fi
 
 VERSION() { ## Display the current version of this script
@@ -390,7 +415,9 @@ SendMessage() { ## $1 is message to send
     curl "$state_baseURL/r0/rooms/$state_roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary '{"msgtype":"m.text","body":"'"$_MSG"'"}'
 }
 
-mpddj() { ## $@ command to send
+mpddj() { ## $@ command to send to mpddj
+    ## NOTE: all mpddj* commands use a fixed room !mpd:half-shot.uk
+    ##
     ## skip the currently playing song on http://half-shot.uk/stream via mpddj in room mpd:half-shot.uk
     ## ping Ping the server and get the delay.
     ## current Get the current song title.
