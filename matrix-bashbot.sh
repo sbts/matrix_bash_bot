@@ -678,8 +678,6 @@ SampleGets() { ## some sample gets that don't need authentication
     _userId_encoded="$URLstring"
 
     local _URL="http://${_userId##*:}"
-    rawurlencode "$_URL"
-    _URL="$URLstring"
 
     echo "Public Room List for $_URL"
     echo "More info is available for each room but limited to just the room name here"
