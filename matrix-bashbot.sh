@@ -699,19 +699,12 @@ SampleGets() { ## some sample gets that don't need authentication
     echo
 }
 
-exit
-
-echo a
 if ! $SOURCED; then
-echo b
     dump_State;
 fi
-echo c
+
 "$@"
 
-echo "d"
 if ! $SOURCED; then
-echo "e"
     store_State
 fi
-echo "f"
