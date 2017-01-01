@@ -295,7 +295,7 @@ WRITE_README() { ## Update the README.md file
     dump_Functions >> README.md
 }
 
-if ! $SOURCED || { [[ $@ =~ -h ]] || [[ $@ =~ --help ]]; } ; then HELP; fi
+if ! $SOURCED && { [[ $@ =~ -h ]] || [[ $@ =~ --help ]]; } ; then HELP; fi
 
 VERSION() { ## Display the current version of this script
     ## Run this with -V --version or VERSION
@@ -699,16 +699,19 @@ SampleGets() { ## some sample gets that don't need authentication
     echo
 }
 
+exit
 
+echo a
 if ! $SOURCED; then
+echo b
     dump_State;
 fi
-
+echo c
 "$@"
 
-echo "a"
+echo "d"
 if ! $SOURCED; then
-echo "b"
+echo "e"
     store_State
 fi
-echo "z"
+echo "f"
