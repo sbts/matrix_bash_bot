@@ -95,16 +95,18 @@ export COLUMNS
 function issourced() { # this function should work but is untested as yet
     [[ ${FUNCNAME[ (( ${#FUNCNAME[@]} - 1 ))]} == "source" ]]
 }
+if issourced; then SOURCED=true; else SOURCED=false; fi
+
 ScriptName="${ARGV:-$0}"
 if [[ ${BASH##*/} != "bash" ]]; then
     echo "This script '$ScriptName' is intended to only be run from bash"
     exit 1
 fi
-if [[ "${_bash_source0##*/}" == "${0##*/}" ]]; then
-    SOURCED=false;
-else
-    SOURCED=true;
-fi
+#if [[ "${_bash_source0##*/}" == "${0##*/}" ]]; then
+#    SOURCED=false;
+#else
+#    SOURCED=true;
+#fi
 
 # #####################
 # Check for Args and warn if non available
@@ -370,7 +372,10 @@ LogIn() { ## Login to get an access token for your username
     resp=`curl --silent -XPOST -d "$json" "$state_baseURL/api/v1/login"`
 
     state_accessTOKEN=`jq --raw-output .access_token /dev/stdin <<<$resp`
-
+#dcg_fixme
+jq . /dev/stdin <<<$resp
+echo -e "\n\n=======\ntoken=$state_accessTOKEN"
+#
     #efresh_token is optional in the response
     expected_response='{
         "access_token": "QGV4YW1wbGU6bG9jYWxob3N0.vRDLTgxefmKWQEtgGd",
@@ -701,51 +706,9 @@ fi
 
 "$@"
 
+echo "a"
 if ! $SOURCED; then
+echo "b"
     store_State
 fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+echo "z"
