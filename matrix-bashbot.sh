@@ -54,6 +54,9 @@ state_refreshTOKEN='xxxxxx'
 ##
 ## Configuration and Stored State are first obtained from the defaults in the script
 ## Then read from ~/.matrix-bash-bot.rc
+##    NOTE: the location of the rc file can be overridden by setting environment variable 
+##          matrix_bash_bot_rc
+##          before running or sourcing matrix-bashbot.sh
 ## Then read from $StateFile
 ## Each source overrides the previous one.
 ##
@@ -126,9 +129,15 @@ fi
 # #####################
 # Read User Config
 # #####################
-if [[ -r ~/.matrix-bash-bot.rc ]]; then
-    source ~/.matrix-bash-bot.rc;   # read local config from file
-    chmod 600 ~/.matrix-bash-bot.rc # force it to only be readable/writeable by owner
+RCfile=~/.matrix-bash-bot.rc
+if [[ -n $matrix_bash_bot_rc ]]; then
+    if [[ -r $matrix_bash_bot_rc ]]; then
+        RCfile=$matrix_bash_bot_rc
+    fi
+fi
+if [[ -r $RCfile ]]; then
+    source $RCfile;   # read local config from file
+    chmod 600 $RCfile # force it to only be readable/writeable by owner to protect any TOKENS
 fi
 
 StateDir="/tmp/matrixbashbot-$USER"

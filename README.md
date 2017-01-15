@@ -31,6 +31,9 @@ This is due to the state file being stored in a directory named with the System 
                       : ######################################################################################
                       : Configuration and Stored State are first obtained from the defaults in the script
                       : Then read from ~/.matrix-bash-bot.rc
+                      : NOTE: the location of the rc file can be overridden by setting environment variable
+                      : matrix_bash_bot_rc
+                      : before running or sourcing matrix-bashbot.sh
                       : Then read from $StateFile
                       : Each source overrides the previous one.
                       : $StateFile is stored in /tmp and is normally deleted on reboot
