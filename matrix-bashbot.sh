@@ -171,10 +171,10 @@ fi
 # #####################
 cat <<-EOF
 	**********************************************
-	** Loaded Config and state from these files **
-	**     $rcFile                              **
-	**     $rcFile_overlay                      **
-	**     $StateFile                           **
+	** Loaded Config and state from these files
+	**     $rcFile
+	**     $rcFile_overlay
+	**     $StateFile
 	**********************************************
 	EOF
 
