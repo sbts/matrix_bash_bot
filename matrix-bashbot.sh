@@ -99,21 +99,13 @@ export COLUMNS
 # Work out if we were executed or sourced
 # and if sourced make sure it was from a bash shell
 # #####################
-function issourced() { # this function should work but is untested as yet
-    [[ ${FUNCNAME[ (( ${#FUNCNAME[@]} - 1 ))]} == "source" ]]
-}
-if issourced; then SOURCED=true; else SOURCED=false; fi
+if [[ ${FUNCNAME[0]} == "source" ]]; then SOURCED=true; else SOURCED=false; fi
 
 ScriptName="${ARGV:-$0}"
 if [[ ${BASH##*/} != "bash" ]]; then
     echo "This script '$ScriptName' is intended to only be run from bash"
     exit 1
 fi
-#if [[ "${_bash_source0##*/}" == "${0##*/}" ]]; then
-#    SOURCED=false;
-#else
-#    SOURCED=true;
-#fi
 
 # #####################
 # Check for Args and warn if non available
