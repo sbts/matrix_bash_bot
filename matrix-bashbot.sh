@@ -51,19 +51,26 @@ state_refreshTOKEN='xxxxxx'
 
 ## ########################################################################################
 ## ########################################################################################
-##
+## .
 ## Configuration and Stored State are first obtained from the defaults in the script
 ## Then read from ~/.matrix-bash-bot.rc
 ## Then read from $StateFile
 ## Each source overrides the previous one.
-##
+## .
 ## $StateFile is stored in /tmp and is normally deleted on reboot
 ## any state_ variables can be stored in ~/.matrix-bash-bot.rc to provide defaults after a reboot.
 ## but beware, if you do this with the TOKENS and later run the LOGIN function you will 
-##   need to manually update them otherwise a subsequent reboot will end up using the wrong TOKENS
-##   A better way of handling this is to make sure you do a login after every reboot.
-##   Eventually we will test for an empty TOKEN every time the script is run, and do an auto login.
-##
+## .  need to manually update them otherwise a subsequent reboot will end up using the wrong TOKENS
+## .  A better way of handling this is to make sure you do a login after every reboot.
+## .  Eventually we will test for an empty TOKEN every time the script is run, and do an auto login.
+## .
+## ENVIRONMENT VARIABLES
+## .  MATRIXBASHBOT_RC           - Override the RC file location (~/.matrix-bash-bot.rc)
+## .  MATRIXBASHBOT_RC_OVERLAY   - The RC file gets loaded first, then this file allows overrides by simply
+## .                               reassigning variables
+## .  MATRIXBASHBOT_INSTANCE     - Append an instance name to the $StateFile DIR (/tmp/matrixbashbot-$USER)
+## .                               so it looks like    /tmp/matrixbashbot-$USER-$MATRIXBASHBOT_INSTANCE
+## .
 ## ########################################################################################
 ## ########################################################################################
 
@@ -126,18 +133,26 @@ fi
 # #####################
 # Read User Config
 # #####################
-if [[ -r ~/.matrix-bash-bot.rc ]]; then
-    source ~/.matrix-bash-bot.rc;   # read local config from file
-    chmod 600 ~/.matrix-bash-bot.rc # force it to only be readable/writeable by owner
+rcFile="${MATRIXBASHBOT_RC:=$HOME/.matrix-bash-bot.rc}";
+if [[ -r "$rcFile" ]]; then
+    source "$rcFile";   # read local config from file
+    chmod 600 "$rcFile"  || { DIE "'$ScriptName' said" "failed to own my RC file ($rcFile)"; exit; }# force it to only be readable/writeable by owner
 fi
 
-StateDir="/tmp/matrixbashbot-$USER"
+# Read User Config Overlay
+rcFile_overlay="${MATRIXBASHBOT_RC_OVERLAY}";
+if [[ -r "$rcFile_overlay" ]]; then
+    source "$rcFile_overlay";   # read local config from file
+    chmod 600 "$rcFile_overlay"  || { DIE "'$ScriptName' said" "failed to own my rc overlay file ($rcFile_overlay)"; exit; } # force it to only be readable/writeable by owner
+fi
+
+StateDir="/tmp/matrixbashbot-$USER${MATRIXBASHBOT_INSTANCE:+-$MATRIXBASHBOT_INSTANCE}"
 StateFile="$StateDir/state-vars"
 File_InitialSync="$StateDir/state-initial-sync"
 mkdir -p "$StateDir"
 
 if [[ ! -r $StateFile ]]; then
-    chown -R $USER:$USER "$StateDir/" || { DIE "'$ScriptName' said" "failed to own my state file"; exit; }
+    chown -R $USER:$USER "$StateDir/" || { DIE "'$ScriptName' said" "failed to own my state file ($StateFile)"; exit; }
 fi
 
 # #####################
