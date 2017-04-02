@@ -136,7 +136,7 @@ fi
 rcFile="${MATRIXBASHBOT_RC:=$HOME/.matrix-bash-bot.rc}";
 if [[ -r "$rcFile" ]]; then
     source "$rcFile";   # read local config from file
-    chmod 600 "$rcFile"  || { DIE "'$ScriptName' said" "failed to own my RC file ($rcFile)"; exit; }# force it to only be readable/writeable by owner
+    chmod 600 "$rcFile"  || { DIE "'$ScriptName' said" "failed to own my RC file ($rcFile)"; exit; } # force it to only be readable/writeable by owner
 fi
 
 # Read User Config Overlay
