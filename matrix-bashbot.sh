@@ -165,6 +165,19 @@ if [[ -r $StateFile ]]; then
 else
     echo "statefile is missing"
 fi
+
+# #####################
+# Report Config and State Load Order
+# #####################
+cat <<-EOF
+	**********************************************
+	** Loaded Config and state from these files **
+	**     $rcFile                              **
+	**     $rcFile_overlay                      **
+	**     $StateFile                           **
+	**********************************************
+	EOF
+
 #state_txnID=1
 MSG='Test from matrix bashbot';
 #curl 'https://matrix.org/_matrix/client/r0/rooms/!cURbafjkfsMDVwdRDQ%3Amatrix.org/send/m.room.message/m1455740925390?access_token=censored' \
