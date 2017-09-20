@@ -19,7 +19,7 @@
 ## ########################################################################################
 ## ########################################################################################
 
-
+VERBOSE="${VERBOSE:-false}"
 # #####################
 # These variables should be set in ~/.matrix-bash-bot.rc
 # DO NOT SET THEM IN THIS FILE !!!! It would be a security risk to do so
@@ -95,6 +95,10 @@ DIE() { ## $1 = short message  $2 = detail
     exit
 }
 
+vecho() {
+    $VERBOSE && echo $@
+}
+
 read COLUMNS < <(tput cols)
 export COLUMNS
 
@@ -154,7 +158,7 @@ fi
 # Load stored state from file
 # #####################
 if [[ -r $StateFile ]]; then
-    echo "reading statefile"
+    vecho "reading statefile"
     chmod 600 $StateFile # force it to only be readable/writeable by owner
     source "$StateFile"
 else
@@ -164,7 +168,7 @@ fi
 # #####################
 # Report Config and State Load Order
 # #####################
-cat <<-EOF
+$VERBOSE && cat <<-EOF
 	**********************************************
 	** Loaded Config and state from these files
 	**     $rcFile
@@ -203,7 +207,7 @@ dump_State() {
 }
 
 store_State() {
-    echo -e '\n\nStoring Current State'
+    vecho -e '\n\nStoring Current State'
     echo -n > "$StateFile"
     if [[ ! -w "$StateFile" ]]; then echo "statefile not writeable"; fi
     for var in ${!state_@}; do
@@ -211,10 +215,10 @@ store_State() {
         if [[ $var =~ 'TOKEN' ]]; then
             if (( ${#_val} > 20 )); then _t="${_val: -10}"; _val="${_val:0:10}....$_t"; fi
         fi
-        printf "    %12s = %s\n" "${var#state_}" "$_val"
+        $VERBOSE && printf "    %12s = %s\n" "${var#state_}" "$_val"
         printf "%s=\"%s\"\n" "${var}" "${!var}" >> "$StateFile"
     done
-    echo
+    vecho
 }
 
 clear_State() { ## clear all stored state
@@ -338,6 +342,7 @@ VERSION() { ## Display the current version of this script
     exit
 }
 if [[ $@ =~ -V ]] || [[ $@ =~ --version ]]; then VERSION; fi
+if [[ $@ =~ -v ]] || [[ $@ =~ --verbose ]]; then VERBOSE='true'; fi
 
 rawurlencode() { # URL encode $1
     # Result is returned in $URLstring
@@ -573,6 +578,81 @@ GetRecentEvents() { ## this is broken for now, should return the last X events i
     jq . /dev/stdin <<<$resp
 }
 
+ConvertAgeToTime() {
+    date -u -d @${1} +"%T"
+}
+
+ConvertTSToDateTime() {
+    date -u -d @${1} +"%F-%T"
+}
+
+xMinifyJSON() { :; } # use this to disable a JSON blob that comes after the one you want to use
+MinifyJSON() { ## for now just Squashes multiple spaces together. #FIXME: be smarter, including removal of cr/lf etc
+    local -g RESULTstring="${1//    / }";
+    while [[ "$RESULTstring" =~ '  ' ]]; do
+        RESULTstring="${RESULTstring//  / }";
+    done
+    while [[ "$RESULTstring" =~ $'\r' ]]; do
+        RESULTstring="${RESULTstring//$'\r'/}";
+    done
+    while [[ "$RESULTstring" =~ $'\n' ]]; do
+        RESULTstring="${RESULTstring//$'\n'/}";
+    done
+}
+
+GetEvents_m_room_message() {    ## $1  # last ${1:-1000} events in the current room.
+                                ## $2  # starting from the latest event specified by ${2:-END}
+                                ## $3  # a json list containing senders to exclude.
+                                ##       eg: '"@_neb_github_=40john=3amatrix.freelock.com:matrix.org", "@someuser:matrix.org"'
+                                ##       defaults to '"@_neb_github_=40john=3amatrix.freelock.com:matrix.org"'
+    ##
+    ## ########################################################
+    ## WARNING fixme this function is untested use with caution
+    ## ########################################################
+    ##
+    hideToken='hidden' ## comment this out to show the access token in verbose output
+    local _From="${2:-END}"; # Token to use for first event to retrieve. Can be 'END' or the token returned in "start" or "end" paramater by a previous request
+    local _Dir='b';   # one of 'b' or 'f'. changes direction to retrieve in relation to "from"
+    local _Limit=${1:-1000}; # maximum number of events to return
+    local _Not_Users="${3:-\"@_neb_github_=40john=3amatrix.freelock.com:matrix.org\"}"
+    # a filter to use. This '{"contains_url":true}' only returns events that contain url's # See http://matrix.org/speculator/spec/HEAD/client_server/unstable.html#filtering
+    # another example filter https://github.com/turt2live/matrix-voyager-bot/blob/master/src/matrix/filter_template.json
+    # this filter doesn't work as expected. the content.msgtype part is ignored
+#    MinifyJSON '{
+#            "types": ["m.room.message"],
+#            "not_senders": ["@_neb_github_=40john=3amatrix.freelock.com:matrix.org"],
+#            "content": {
+#                "msgtype": ["m.text"]
+#            }
+#    }';
+    MinifyJSON '{
+        "types": ["m.room.message"],
+        "not_senders": ['${_Not_Users}']
+    }';
+    rawurlencode "${RESULTstring}"
+    local _Filter="${URLstring}"
+
+    vecho "curl --silent -XGET \"$state_baseURL/api/v1/rooms/$state_roomID/messages?access_token=${hideToken:-$state_accessTOKEN}&from=${_From}&dir=${_Dir}&limit=${_Limit}${RESULTstring:+&filter=}${RESULTstring}\"" >/dev/stderr
+    resp=` curl --silent -XGET "$state_baseURL/api/v1/rooms/$state_roomID/messages?access_token=$state_accessTOKEN&from=${_From}&dir=${_Dir}&limit=${_Limit}${_Filter:+&filter=}${_Filter}"`
+    vecho "==== raw ====" >/dev/stderr
+    echo -e "$resp" > /tmp/raw.json
+    vecho "== Raw output written to /tmp/raw.json ==" >/dev/stderr
+    vecho "==== json ====" >/dev/stderr
+    jq . /dev/stdin <<<$resp
+    #    jq -r '.chunk[] | select(.age < 86400000) | "\(.age) \(.user_id)"' /dev/stdin <<<$resp
+    #    jq -r '.chunk[] | select( .content.msgtype == "m.text" ) | select(.age < 86400000) | "\(.age) \(.user_id) \(.content.body)"' /dev/stdin <<<$resp
+}
+
+GetEventLog_24_Hrs() {
+    #  FIXME we want to test for jq version >=1.5 then we can use date conversions like....
+    #    jq --arg date "2016-04-25" '.[].published_at |= (. / 1000 | strftime("%Y-%m-%d")) | map(select(.published_at == $date))' stuff.json
+    local _minAge=0     # seconds
+    local _maxAge=86400 # seconds
+    GetEvents_m_room_message 1000 >/dev/null
+    jq -r --arg maxAge "$_maxAge" '.chunk[] | select( .content.msgtype == "m.text" ) | select(.age < ( $maxAge | tonumber) *1000) | @sh "\(.origin_server_ts/1000) \(.user_id) \(.content.body)"' /dev/stdin <<<$resp # NOTE .age/1000 to convert it to seconds
+    jq -r --arg maxAge "$_maxAge" '.chunk[] | select( .content.msgtype == "m.text" ) | select(.age < ( $maxAge | tonumber) *1000) | length' /dev/stdin <<<$resp | wc -l
+}
+
 DoSync() { ## runs a sync from the last known event time
     ##
     ## ########################################################
@@ -723,7 +803,7 @@ SampleGets() { ## some sample gets that don't need authentication
 }
 
 if ! $SOURCED; then
-    dump_State;
+    $VERBOSE && dump_State;
 fi
 
 "$@"
