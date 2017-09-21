@@ -643,7 +643,7 @@ GetEvents_m_room_message() {    ## $1  # last ${1:-1000} events in the current r
     #    jq -r '.chunk[] | select( .content.msgtype == "m.text" ) | select(.age < 86400000) | "\(.age) \(.user_id) \(.content.body)"' /dev/stdin <<<$resp
 }
 
-GetEventLog_24_Hrs() {
+GetEventLog_24_Hrs() { ## return the last 24 hours of events
     #  FIXME we want to test for jq version >=1.5 then we can use date conversions like....
     #    jq --arg date "2016-04-25" '.[].published_at |= (. / 1000 | strftime("%Y-%m-%d")) | map(select(.published_at == $date))' stuff.json
     local _minAge=0     # seconds
