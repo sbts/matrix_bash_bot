@@ -635,7 +635,8 @@ GetEvents_m_room_message() {    ## $1  # last ${1:-1000} events in the current r
     vecho "curl --silent -XGET \"$state_baseURL/api/v1/rooms/$state_roomID/messages?access_token=${hideToken:-$state_accessTOKEN}&from=${_From}&dir=${_Dir}&limit=${_Limit}${RESULTstring:+&filter=}${RESULTstring}\"" >/dev/stderr
     resp=` curl --silent -XGET "$state_baseURL/api/v1/rooms/$state_roomID/messages?access_token=$state_accessTOKEN&from=${_From}&dir=${_Dir}&limit=${_Limit}${_Filter:+&filter=}${_Filter}"`
     vecho "==== raw ====" >/dev/stderr
-    echo -e "$resp" > /tmp/raw.json
+    # echo -e "$resp" > /tmp/raw.json.echo # DON'T do it this way. the -e swallows some \ escapes which can result in invalid json
+    printf "%s" "$resp" > /tmp/raw.json
     vecho "== Raw output written to /tmp/raw.json ==" >/dev/stderr
     vecho "==== json ====" >/dev/stderr
     jq . /dev/stdin <<<$resp
