@@ -447,6 +447,26 @@ SendMessage() { ## $1 is message to send
     curl "$state_baseURL/r0/rooms/$state_roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary '{"msgtype":"m.text","body":"'"$_MSG"'"}'
 }
 
+SendFile() { 
+    state_txnID="`date "+%s"`$(( RANDOM % 9999 ))"
+    #echo -e "$json" "$state_homeURL/_matrix/media/r0/upload"
+    resp=`curl  -H "Content-Type: image/jpeg" -XPOST "$state_homeURL/_matrix/media/r0/upload?access_token=$state_accessTOKEN&filename=${1:${#1}-16:${#1}}"  --upload-file "$1" # -F "image=@$1"`
+    #echo -e ${resp:16:48}
+    json='{
+    "body": "'${1:${#1}-16:${#1}}'",
+    "info": {
+      "mimetype": "image/jpeg",
+      "thumbnail_info": {
+        "mimetype": "image/jpeg"
+      },
+    },
+    "msgtype": "m.image",
+    "url": "'${resp:16:48}'"
+}'
+    resp2=`curl "$state_baseURL/r0/rooms/$state_roomID/send/m.room.message/$state_txnID?access_token=$state_accessTOKEN" -X PUT --data-binary "$json"`
+    #echo -e $resp2
+
+}
 mpddj() { ## $@ command to send to mpddj
     ## NOTE: all mpddj* commands use a fixed room !mpd:half-shot.uk
     ##
